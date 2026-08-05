@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PromptAI — Prompt Board</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧩</text></svg>">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-dot"></span>
+    <h1>Prompt Board</h1>
+    <span class="count" id="count">0 Prompts</span>
+  </div>
+
+  <div class="tools">
+    <input type="search" id="search" placeholder="Suchen…" autocomplete="off">
+    <button id="addBtn" class="btn btn-primary" hidden>+ Neuer Prompt</button>
+    <button id="importBtn" class="btn btn-ghost" hidden title="Prompts aus Datei importieren">Import</button>
+    <button id="exportBtn" class="btn btn-ghost" title="Alle Prompts als Datei sichern">Export</button>
+    <button id="lockBtn" class="btn btn-lock" title="Bearbeiten entsperren / sperren">
+      <span id="lockIcon">🔒</span><span id="lockText">Gesperrt</span>
+    </button>
+  </div>
+</header>
+
+<main>
+  <div id="grid" class="grid"></div>
+
+  <div id="empty" class="empty" hidden>
+    <p class="empty-title">Noch keine Prompts</p>
+    <p>Klicke auf das Schloss 🔒 oben rechts, um zu entsperren, und lege deinen ersten Prompt an.</p>
+  </div>
+</main>
+
+<!-- Ansicht: Prompt gross lesen + kopieren -->
+<div id="viewOverlay" class="overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="viewTitle">
+    <div class="modal-head">
+      <h2 id="viewTitle"></h2>
+      <button class="icon-btn" id="viewClose" title="Schliessen (Esc)">✕</button>
+    </div>
+    <pre id="viewBody" class="prompt-body"></pre>
+    <div class="modal-foot">
+      <span class="hint" id="viewMeta"></span>
+      <div class="foot-actions">
+        <button id="viewEdit" class="btn btn-ghost" hidden>Bearbeiten</button>
+        <button id="viewCopy" class="btn btn-primary">📋 Prompt kopieren</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bearbeiten / Neu -->
+<div id="editOverlay" class="overlay" hidden>
+  <form class="modal" id="editForm" role="dialog" aria-modal="true" aria-labelledby="editHeading">
+    <div class="modal-head">
+      <h2 id="editHeading">Neuer Prompt</h2>
+      <button type="button" class="icon-btn" id="editClose" title="Abbrechen (Esc)">✕</button>
+    </div>
+
+    <label class="field">
+      <span>Titel <em>(wird nie mitkopiert)</em></span>
+      <input type="text" id="fTitle" maxlength="80" required placeholder="z. B. Game-Prompt Generator">
+    </label>
+
+    <label class="field">
+      <span>Prompt <em>(nur dieser Text wird kopiert)</em></span>
+      <textarea id="fBody" rows="14" required placeholder="Hier den vollständigen Basis-Prompt einfügen…"></textarea>
+    </label>
+
+    <div class="modal-foot">
+      <button type="button" id="deleteBtn" class="btn btn-danger" hidden>Löschen</button>
+      <div class="foot-actions">
+        <button type="button" id="cancelBtn" class="btn btn-ghost">Abbrechen</button>
+        <button type="submit" class="btn btn-primary">Speichern</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+<div id="toast" class="toast" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>
