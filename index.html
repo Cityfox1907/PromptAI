@@ -9,30 +9,46 @@
 </head>
 <body>
 
-<header class="topbar">
-  <div class="brand">
-    <span class="brand-dot"></span>
-    <h1>Prompt Board</h1>
-    <span class="count" id="count">0 Prompts</span>
+<div class="stickytop">
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <h1>Prompt Board</h1>
+      <span class="count" id="count">0 Prompts</span>
+    </div>
+
+    <div class="tools">
+      <input type="search" id="search" placeholder="Suchen…" autocomplete="off">
+      <button id="manageBtn" class="btn btn-ghost" title="Kategorien anlegen, umbenennen, Prompts zuordnen">🗂 Kategorien</button>
+      <button id="importBtn" class="btn btn-ghost" title="Prompts aus Datei einlesen">Import</button>
+      <button id="exportBtn" class="btn btn-ghost" title="Alle Prompts als Datei sichern">Export</button>
+      <button id="lockAllBtn" class="btn btn-lock" hidden title="Alle offenen Kacheln wieder sperren">🔒 Alle sperren <span id="lockAllCount"></span></button>
+    </div>
+  </header>
+
+  <div class="storagebar" id="storageBar">
+    <span id="storageText"></span>
+    <button class="linkbtn" id="storageAction" hidden>Jetzt sichern</button>
   </div>
 
-  <div class="tools">
-    <input type="search" id="search" placeholder="Suchen…" autocomplete="off">
-    <button id="addBtn" class="btn btn-primary" hidden>+ Neuer Prompt</button>
-    <button id="importBtn" class="btn btn-ghost" hidden title="Prompts aus Datei importieren">Import</button>
-    <button id="exportBtn" class="btn btn-ghost" title="Alle Prompts als Datei sichern">Export</button>
-    <button id="lockBtn" class="btn btn-lock" title="Bearbeiten entsperren / sperren">
-      <span id="lockIcon">🔒</span><span id="lockText">Gesperrt</span>
-    </button>
-  </div>
-</header>
+  <!-- Immer sichtbar: neuer Prompt -->
+  <form class="quickbar" id="quickForm" autocomplete="off">
+    <div class="qb-row">
+      <input type="text" id="qTitle" maxlength="80" required placeholder="Titel des neuen Prompts…">
+      <select id="qCat" title="Kategorie"></select>
+      <div class="swatches" id="qColors" aria-label="Rahmenfarbe"></div>
+      <button type="submit" class="btn btn-primary">+ Anlegen</button>
+    </div>
+    <textarea id="qBody" rows="1" required placeholder="Prompt-Text hier einfügen…   (Ctrl/Cmd + Enter = anlegen)"></textarea>
+  </form>
+</div>
 
 <main>
-  <div id="grid" class="grid"></div>
+  <div id="board" class="board"></div>
 
   <div id="empty" class="empty" hidden>
     <p class="empty-title">Noch keine Prompts</p>
-    <p>Klicke auf das Schloss 🔒 oben rechts, um zu entsperren, und lege deinen ersten Prompt an.</p>
+    <p>Titel und Prompt-Text oben in die Leiste eintragen und auf <strong>+ Anlegen</strong> klicken.</p>
   </div>
 </main>
 
@@ -40,13 +56,17 @@
 <div id="viewOverlay" class="overlay" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="viewTitle">
     <div class="modal-head">
-      <h2 id="viewTitle"></h2>
+      <div>
+        <h2 id="viewTitle"></h2>
+        <div class="chips" id="viewChips"></div>
+      </div>
       <button class="icon-btn" id="viewClose" title="Schliessen (Esc)">✕</button>
     </div>
     <pre id="viewBody" class="prompt-body"></pre>
     <div class="modal-foot">
       <span class="hint" id="viewMeta"></span>
       <div class="foot-actions">
+        <button id="viewLock" class="btn btn-ghost" title="Diese Kachel entsperren / sperren">🔒</button>
         <button id="viewEdit" class="btn btn-ghost" hidden>Bearbeiten</button>
         <button id="viewCopy" class="btn btn-primary">📋 Prompt kopieren</button>
       </div>
@@ -54,11 +74,11 @@
   </div>
 </div>
 
-<!-- Bearbeiten / Neu -->
+<!-- Bearbeiten -->
 <div id="editOverlay" class="overlay" hidden>
   <form class="modal" id="editForm" role="dialog" aria-modal="true" aria-labelledby="editHeading">
     <div class="modal-head">
-      <h2 id="editHeading">Neuer Prompt</h2>
+      <h2 id="editHeading">Prompt bearbeiten</h2>
       <button type="button" class="icon-btn" id="editClose" title="Abbrechen (Esc)">✕</button>
     </div>
 
@@ -67,13 +87,24 @@
       <input type="text" id="fTitle" maxlength="80" required placeholder="z. B. Game-Prompt Generator">
     </label>
 
+    <div class="field-row">
+      <label class="field">
+        <span>Kategorie</span>
+        <select id="fCat"></select>
+      </label>
+      <div class="field">
+        <span>Rahmenfarbe</span>
+        <div class="swatches" id="fColors" aria-label="Rahmenfarbe"></div>
+      </div>
+    </div>
+
     <label class="field">
       <span>Prompt <em>(nur dieser Text wird kopiert)</em></span>
       <textarea id="fBody" rows="14" required placeholder="Hier den vollständigen Basis-Prompt einfügen…"></textarea>
     </label>
 
     <div class="modal-foot">
-      <button type="button" id="deleteBtn" class="btn btn-danger" hidden>Löschen</button>
+      <button type="button" id="deleteBtn" class="btn btn-danger">Löschen</button>
       <div class="foot-actions">
         <button type="button" id="cancelBtn" class="btn btn-ghost">Abbrechen</button>
         <button type="submit" class="btn btn-primary">Speichern</button>
@@ -82,6 +113,46 @@
   </form>
 </div>
 
+<!-- Verwaltung: Kategorien + Zuordnung -->
+<div id="manageOverlay" class="overlay" hidden>
+  <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="manageHeading">
+    <div class="modal-head">
+      <h2 id="manageHeading">🗂 Kategorien verwalten</h2>
+      <button type="button" class="icon-btn" id="manageClose" title="Schliessen (Esc)">✕</button>
+    </div>
+
+    <div class="manage-cols">
+      <section class="mcol">
+        <h3>Oberkategorien</h3>
+        <div id="catList" class="cat-list"></div>
+
+        <form id="catAddForm" class="cat-add">
+          <input type="text" id="catName" maxlength="40" required placeholder="Neue Kategorie, z. B. Börse &amp; Aktien">
+          <button type="submit" class="btn btn-primary">+ Anlegen</button>
+        </form>
+
+        <p class="hint">Vorlagen — ein Klick legt die Kategorie an:</p>
+        <div class="presets" id="presets"></div>
+      </section>
+
+      <section class="mcol">
+        <h3>Prompts zuordnen</h3>
+        <div class="assign-tools">
+          <input type="search" id="assignSearch" placeholder="Prompt suchen…" autocomplete="off">
+          <select id="assignTarget"></select>
+          <button type="button" id="assignBtn" class="btn btn-primary">Verschieben</button>
+        </div>
+        <div id="assignList" class="assign-list"></div>
+        <div class="assign-foot">
+          <label class="check"><input type="checkbox" id="assignAll"> Alle sichtbaren auswählen</label>
+          <span class="hint" id="assignCount"></span>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div id="palette" class="palette" hidden></div>
 <input type="file" id="importFile" accept="application/json,.json" hidden>
 <div id="toast" class="toast" hidden></div>
 
